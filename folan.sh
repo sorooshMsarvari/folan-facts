@@ -70,8 +70,10 @@ function print_banner() {
   local banner=$(cat "$BANNER_FILE")
 
   echo_color -b "$banner\n"
-  echo -e "$fact\n"
-  echo "$desc"
+  echo -e "$fact"
+  if [[ "$desc" != "" ]];then
+    echo -e "\n$desc"
+  fi
 }
 
 function print_random_fact() {
