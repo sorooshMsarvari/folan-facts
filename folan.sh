@@ -30,19 +30,25 @@ function get_random_fact() {
 }
 
 function echo_color() {
-  local GREEN="\033[1;36m"
-  local GRAY="\033[1;35m"
+  local PRIMARY="\033[1;36m"
+  local SECONDARY="\033[1;35m"
+  local BANNER="\033[1;33m"
   local NC="\033[0m"
 
   local color
   case "$1" in
-    -g)
-      color="$GREEN"
+    -p)
+      color="$PRIMARY"
       shift
       ;;
-    -gr)
-      color="$GRAY"
+    -s)
+      color="$SECONDARY"
       shift
+      ;;
+    -b)
+      color="$BANNER"
+      shift
+      ;;
   esac
 
   echo -e "${color}$*${NC}"
@@ -50,21 +56,21 @@ function echo_color() {
 
 function print_fact() {
   local fact=$(echo "$1" | jq -r '.fact')
-  echo_color -g $fact
+  echo_color -p $fact
 }
 
 function print_desc() {
   local desc=$(echo "$1" | jq -r '.desc')
-  echo_color -gr $desc
+  echo_color -s $desc
 }
 
 function print_banner() {
   local fact="$1"
   local desc="$2"
+  local banner=$(cat "$BANNER_FILE")
 
-  cat "banner.txt"
-  echo
-  echo "$fact"
+  echo_color -b "$banner\n"
+  echo -e "$fact\n"
   echo "$desc"
 }
 
@@ -72,6 +78,7 @@ function print_random_fact() {
   local fact_obj=$(get_random_fact)
 
   local fact=$(print_fact "$fact_obj")
+
   local desc=""
   if $NEED_DESC; then
     desc=$(print_desc "$fact_obj")
@@ -83,6 +90,7 @@ function print_random_fact() {
 function main() {
   NEED_DESC=false
   FACTS_FILE="folan-facts.json"
+  BANNER_FILE="banner.txt"
 
   cd_here
   get_args "$@"
