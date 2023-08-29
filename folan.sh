@@ -12,6 +12,10 @@ function get_args() {
         NEED_DESC=true
         shift # past argument
         ;;
+      -i|--index)
+        NEED_INDEX=true
+        shift
+        ;;
       *)
         shift # past argument
         ;;
@@ -26,7 +30,7 @@ function get_fact_num() {
 function get_random_fact() {
   fact_num=$(get_fact_num)
   fact_index=$((RANDOM % fact_num))
-  jq -r --arg f_idx $fact_index '.[$f_idx | tonumber]' "$FACTS_FILE"
+  jq -r --arg f_idx $fact_index '.[$f_idx | tonumber] + {"index": $f_idx}' "$FACTS_FILE"
 }
 
 function echo_color() {
@@ -55,7 +59,11 @@ function echo_color() {
 }
 
 function print_fact() {
-  local fact=$(echo "$1" | jq -r '.fact')
+  local fact=""
+  if $NEED_INDEX; then
+    fact="$(echo "$1" | jq -r '.index'). "
+  fi
+  fact+=$(echo "$1" | jq -r '.fact')
   echo_color -p $fact
 }
 
@@ -91,6 +99,7 @@ function print_random_fact() {
 
 function main() {
   NEED_DESC=false
+  NEED_INDEX=false
   FACTS_FILE="folan-facts.json"
   BANNER_FILE="banner.txt"
 
