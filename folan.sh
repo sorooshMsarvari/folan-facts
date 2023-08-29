@@ -5,38 +5,12 @@ function cd_here() {
   cd $(dirname -- $BASH_SOURCE)
 }
 
-function get_args() {
-  while [[ $# -gt 0 ]]; do
-    case $1 in
-      -d|--description)
-        NEED_DESC=true
-        shift # past argument
-        ;;
-      -i|--index)
-        NEED_INDEX=true
-        shift
-        ;;
-      *)
-        shift # past argument
-        ;;
-    esac
-  done
-}
-
-function get_fact_num() {
-  cat $FACTS_FILE | jq '. | length'
-}
-
-function get_random_fact() {
-  fact_num=$(get_fact_num)
-  fact_index=$((RANDOM % fact_num))
-  jq -r --arg f_idx $fact_index '.[$f_idx | tonumber] + {"index": $f_idx}' "$FACTS_FILE"
-}
 
 function echo_color() {
   local PRIMARY="\033[1;36m"
   local SECONDARY="\033[1;35m"
   local BANNER="\033[1;33m"
+  local ERROR="\033[0;31m"
   local NC="\033[0m"
 
   local color
@@ -53,14 +27,66 @@ function echo_color() {
       color="$BANNER"
       shift
       ;;
+    -e)
+      color="$ERROR"
+      shift
+      ;;
   esac
 
   echo -e "${color}$*${NC}"
 }
 
+function validate_fact_index() {
+  local NUMERIC_RE='^[0-9]+$'
+  input=$1
+  if [[ ! "$input" =~ $NUMERIC_RE ]]; then
+    echo_color -e "invalid fact index"
+    exit 1
+  fi
+}
+
+function get_args() {
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -d|--description)
+        DESC_FLAG=true
+        shift # past argument
+        ;;
+      -s|--show-index)
+        SHOW_INDEX_FLAG=true
+        shift
+        ;;
+      -i|--index)
+        validate_fact_index "$2"
+        FACT_INDEX="$2"
+        shift
+        shift
+        ;;
+      *)
+        shift # past argument
+        ;;
+    esac
+  done
+}
+
+function get_fact_num() {
+  cat $FACTS_FILE | jq '. | length'
+}
+
+function get_fact() {
+  fact_num=$(get_fact_num)
+  if [[ ${FACT_INDEX:-"unset"} == "unset" ]];then
+    fact_index=$((RANDOM % fact_num))
+  else
+    fact_index=$FACT_INDEX
+  fi
+
+  jq -r --arg f_idx $fact_index '.[$f_idx | tonumber] + {"index": $f_idx}' "$FACTS_FILE"
+}
+
 function print_fact() {
   local fact=""
-  if $NEED_INDEX; then
+  if $SHOW_INDEX_FLAG; then
     fact="$(echo "$1" | jq -r '.index'). "
   fi
   fact+=$(echo "$1" | jq -r '.fact')
@@ -85,12 +111,12 @@ function print_banner() {
 }
 
 function print_random_fact() {
-  local fact_obj=$(get_random_fact)
+  local fact_obj=$(get_fact)
 
   local fact=$(print_fact "$fact_obj")
 
   local desc=""
-  if $NEED_DESC; then
+  if $DESC_FLAG; then
     desc=$(print_desc "$fact_obj")
   fi
 
@@ -98,8 +124,10 @@ function print_random_fact() {
 }
 
 function main() {
-  NEED_DESC=false
-  NEED_INDEX=false
+  DESC_FLAG=false
+  SHOW_INDEX_FLAG=false
+  declare FACT_INDEX
+
   FACTS_FILE="folan-facts.json"
   BANNER_FILE="banner.txt"
 
