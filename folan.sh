@@ -24,28 +24,46 @@ function get_fact_num() {
 }
 
 function get_random_fact() {
-  FACT_NUM=$(get_fact_num)
-  FACT_INDEX=$((RANDOM % FACT_NUM))
-  jq -r --arg f_idx $FACT_INDEX '.[$f_idx | tonumber]' "$FACTS_FILE"
+  fact_num=$(get_fact_num)
+  fact_index=$((RANDOM % fact_num))
+  jq -r --arg f_idx $fact_index '.[$f_idx | tonumber]' "$FACTS_FILE"
 }
 
+function echo_color() {
+  local GREEN="\033[1;32m"
+  local GRAY="\033[1;90m"
+  local NC="\033[0m"
+
+  local color
+  case "$1" in
+    -g)
+      color="$GREEN"
+      shift
+      ;;
+    -gr)
+      color="$GRAY"
+      shift
+  esac
+
+  echo -e "${color}$*${NC}"
+}
 
 function print_fact() {
-  local FACT=$(echo "$1" | jq -r '.fact')
-  echo $FACT
+  local fact=$(echo "$1" | jq -r '.fact')
+  echo_color -g $fact
 }
 
 function print_desc() {
-  local DESC=$(echo "$1" | jq -r '.desc')
-  echo $DESC
+  local desc=$(echo "$1" | jq -r '.desc')
+  echo_color -gr $desc
 }
 
 function print_random_fact() {
-  FACT_OBJ=$(get_random_fact)
-  print_fact "$FACT_OBJ"
-  if $NEED_DESC
-  then
-    print_desc "$FACT_OBJ"
+  fact_obj=$(get_random_fact)
+  print_fact "$fact_obj"
+
+  if $NEED_DESC; then
+    print_desc "$fact_obj"
   fi
 }
 
