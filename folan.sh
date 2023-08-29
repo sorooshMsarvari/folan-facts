@@ -30,8 +30,8 @@ function get_random_fact() {
 }
 
 function echo_color() {
-  local GREEN="\033[1;32m"
-  local GRAY="\033[1;90m"
+  local GREEN="\033[1;36m"
+  local GRAY="\033[1;35m"
   local NC="\033[0m"
 
   local color
@@ -58,13 +58,26 @@ function print_desc() {
   echo_color -gr $desc
 }
 
-function print_random_fact() {
-  fact_obj=$(get_random_fact)
-  print_fact "$fact_obj"
+function print_banner() {
+  local fact="$1"
+  local desc="$2"
 
+  cat "banner.txt"
+  echo
+  echo "$fact"
+  echo "$desc"
+}
+
+function print_random_fact() {
+  local fact_obj=$(get_random_fact)
+
+  local fact=$(print_fact "$fact_obj")
+  local desc=""
   if $NEED_DESC; then
-    print_desc "$fact_obj"
+    desc=$(print_desc "$fact_obj")
   fi
+
+  print_banner "$fact" "$desc"
 }
 
 function main() {
