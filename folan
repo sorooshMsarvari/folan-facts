@@ -133,6 +133,7 @@ function main() {
 
   cd_here
   get_args "$@"
+  clear
 
   print_random_fact
 }
